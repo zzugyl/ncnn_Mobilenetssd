@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private int model_index = 1;
     private List<String> resultLabel = new ArrayList<>();
     private MobileNetssd mobileNetssd = new MobileNetssd(); //java接口实例化　下面直接利用java函数调用NDK c++函数
+    private boolean GET_SINGLE_RESULT = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -158,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
         // picture to float array
         Bitmap bmp = PhotoUtil.getScaleBitmap(image_path);
         Bitmap rgba = bmp.copy(Bitmap.Config.ARGB_8888, true);
-        // resize
+        // resize to 300*300
         Bitmap input_bmp = Bitmap.createScaledBitmap(rgba, ddims[2], ddims[3], false);
         try {
             // Data format conversion takes too long
@@ -172,9 +173,14 @@ public class MainActivity extends AppCompatActivity {
             long time = end - start;
             Log.d("result length", "length of result: " + String.valueOf(result.length));
             // show predict result and time
-            // float[] r = get_max_result(result);
-
-            String show_text = "result：" + Arrays.toString(result) + "\nname：" + resultLabel.get((int) result[0]) + "\nprobability：" + result[1] + "\ntime：" + time + "ms" ;
+            String show_text;
+            float[] r;
+            if (GET_SINGLE_RESULT){
+                r = get_max_result(result);
+            }else {
+                r = result;
+            }
+            show_text = "result：" + Arrays.toString(r) + "\nname：" + resultLabel.get((int) result[0]) + "\nprobability：" + result[1] + "\ntime：" + time + "ms" ;
             result_text.setText(show_text);
 
             // 画布配置
@@ -185,30 +191,32 @@ public class MainActivity extends AppCompatActivity {
             paint.setStyle(Paint.Style.STROKE);//不填充
             paint.setStrokeWidth(5); //线的宽度
 
+            if (GET_SINGLE_RESULT){
+                canvas.drawRect(r[2]*rgba.getWidth(), r[3]*rgba.getHeight(), r[4]*rgba.getWidth(), r[5]*rgba.getHeight(), paint);
+            } else {
+                float get_finalresult[][] = TwoArry(result);
+                Log.d("zhuanhuan",get_finalresult+"");
+                int object_num = 0;
+                int num = result.length/6;// number of object
+                //continue to draw rect
+                for(object_num = 0; object_num < num; object_num++){
+                    Log.d(TAG, "haha :" + Arrays.toString(get_finalresult));
+                    // 画框
+                    paint.setColor(Color.RED);
+                    paint.setStyle(Paint.Style.STROKE);//不填充
+                    paint.setStrokeWidth(5); //线的宽度
+                    canvas.drawRect(get_finalresult[object_num][2] * rgba.getWidth(), get_finalresult[object_num][3] * rgba.getHeight(),
+                            get_finalresult[object_num][4] * rgba.getWidth(), get_finalresult[object_num][5] * rgba.getHeight(), paint);
 
-            float get_finalresult[][] = TwoArry(result);
-            Log.d("zhuanhuan",get_finalresult+"");
-            int object_num = 0;
-            int num = result.length/6;// number of object
-            //continue to draw rect
-            for(object_num = 0; object_num < num; object_num++){
-                Log.d(TAG, "haha :" + Arrays.toString(get_finalresult));
-                // 画框
-                paint.setColor(Color.RED);
-                paint.setStyle(Paint.Style.STROKE);//不填充
-                paint.setStrokeWidth(5); //线的宽度
-                canvas.drawRect(get_finalresult[object_num][2] * rgba.getWidth(), get_finalresult[object_num][3] * rgba.getHeight(),
-                        get_finalresult[object_num][4] * rgba.getWidth(), get_finalresult[object_num][5] * rgba.getHeight(), paint);
-
-                paint.setColor(Color.YELLOW);
-                paint.setStyle(Paint.Style.FILL);//不填充
-                paint.setStrokeWidth(1); //线的宽度
-                canvas.drawText(resultLabel.get((int) get_finalresult[object_num][0]) + "\n" + get_finalresult[object_num][1],
-                        get_finalresult[object_num][2]*rgba.getWidth(),get_finalresult[object_num][3]*rgba.getHeight(),paint);
+                    paint.setColor(Color.YELLOW);
+                    paint.setStyle(Paint.Style.FILL);//不填充
+                    paint.setStrokeWidth(1); //线的宽度
+                    canvas.drawText(resultLabel.get((int) get_finalresult[object_num][0]) + "\n" + get_finalresult[object_num][1],
+                            get_finalresult[object_num][2]*rgba.getWidth(),get_finalresult[object_num][3]*rgba.getHeight(),paint);
+                }
             }
 
             show_image.setImageBitmap(rgba);
-
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -237,7 +245,6 @@ public class MainActivity extends AppCompatActivity {
         return outputfloat;
     }
 
-    /*
     // get max probability label
     private float[] get_max_result(float[] result) {
         int num_rs = result.length / 6;
@@ -255,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
         }
         return ret;
     }
-    */
+
     // request permissions(add)
     private void request_permissions() {
         List<String> permissionList = new ArrayList<>();
