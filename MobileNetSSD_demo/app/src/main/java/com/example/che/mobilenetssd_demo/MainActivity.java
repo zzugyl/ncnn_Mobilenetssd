@@ -32,8 +32,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-
-import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 
@@ -42,12 +40,10 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getName();
     private static final int USE_PHOTO = 1001;
-    private String camera_image_path;
     private ImageView show_image;
     private TextView result_text;
     private boolean load_result = false;
     private int[] ddims = {1, 3, 300, 300}; //这里的维度的值要和train model的input 一一对应
-    private int model_index = 1;
     private List<String> resultLabel = new ArrayList<>();
     private MobileNetssd mobileNetssd = new MobileNetssd(); //java接口实例化　下面直接利用java函数调用NDK c++函数
     private boolean GET_SINGLE_RESULT = false;
@@ -165,8 +161,13 @@ public class MainActivity extends AppCompatActivity {
             // Data format conversion takes too long
             // Log.d("inputData", Arrays.toString(inputData));
             long start = System.currentTimeMillis();
+            Log.d(TAG, "predict start time: " + start);
             // get predict result
             float[] result = mobileNetssd.Detect(input_bmp);
+            if (0==result.length) {
+                Log.d(TAG, "predict get nothing !!!");
+                return;
+            }
             // time end
             long end = System.currentTimeMillis();
             Log.d(TAG, "origin predict result:" + Arrays.toString(result));
@@ -189,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
             Paint paint = new Paint();
             paint.setColor(Color.RED);
             paint.setStyle(Paint.Style.STROKE);//不填充
-            paint.setStrokeWidth(5); //线的宽度
+            paint.setStrokeWidth(2); //线的宽度
 
             if (GET_SINGLE_RESULT){
                 canvas.drawRect(r[2]*rgba.getWidth(), r[3]*rgba.getHeight(), r[4]*rgba.getWidth(), r[5]*rgba.getHeight(), paint);
@@ -204,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
                     // 画框
                     paint.setColor(Color.RED);
                     paint.setStyle(Paint.Style.STROKE);//不填充
-                    paint.setStrokeWidth(5); //线的宽度
+                    paint.setStrokeWidth(2); //线的宽度
                     canvas.drawRect(get_finalresult[object_num][2] * rgba.getWidth(), get_finalresult[object_num][3] * rgba.getHeight(),
                             get_finalresult[object_num][4] * rgba.getWidth(), get_finalresult[object_num][5] * rgba.getHeight(), paint);
 
@@ -232,16 +233,13 @@ public class MainActivity extends AppCompatActivity {
         for(int i = 0; i < num ; i++)
         {
             int j = 0;
-
             while(j<6)
             {
                 outputfloat[i][j] =  inputfloat[k];
                 k++;
                 j++;
             }
-
         }
-
         return outputfloat;
     }
 

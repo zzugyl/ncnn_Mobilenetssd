@@ -68,8 +68,10 @@ JNIEXPORT jfloatArray JNICALL Java_com_example_che_mobilenetssd_1demo_MobileNets
 //        int height = 300;
         int width = info.width;
         int height = info.height;
-        if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888)
+        if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888){
+            __android_log_print(ANDROID_LOG_DEBUG, "MobileNetssd", "format is not ANDROID_BITMAP_FORMAT_RGBA_8888");
             return NULL;
+        }
 
         void* indata;
         AndroidBitmap_lockPixels(env, bitmap, &indata);
@@ -80,7 +82,7 @@ JNIEXPORT jfloatArray JNICALL Java_com_example_che_mobilenetssd_1demo_MobileNets
         in = ncnn::Mat::from_pixels((const unsigned char*)indata, ncnn::Mat::PIXEL_RGBA2RGB, width, height);
 
         // 下面一行为debug代码
-        //__android_log_print(ANDROID_LOG_DEBUG, "MobilenetssdJniIn", "Mobilenetssd_predict_has_input1, in.w: %d; in.h: %d", in.w, in.h);
+        __android_log_print(ANDROID_LOG_DEBUG, "MobilenetssdJniIn", "Mobilenetssd_predict_has_input1, in.w: %d; in.h: %d", in.w, in.h);
         AndroidBitmap_unlockPixels(env, bitmap);
     }
 
